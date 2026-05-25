@@ -1,0 +1,9 @@
+{
+  "pluginId": "testcase-mindmap",
+  "name": "多维表格思维导图视图",
+  "version": "1.0.0",
+  "type": "view",
+  "entry": "./dist/index.html",
+  "icon": "./public/icon.png",
+  "description": "以思维导图形式展示和管理测试用例"
+}

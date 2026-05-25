@@ -1,0 +1,311 @@
+.mindmap-view {
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 10px;
+  background: #fff;
+  border-bottom: 1px solid #f0f0f0;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  gap: 6px;
+  z-index: 10;
+}
+
+.field-selectors {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.field-selector {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.field-label {
+  font-size: 12px;
+  color: #595959;
+  white-space: nowrap;
+}
+
+.shortcut-hint {
+  font-size: 11px;
+  color: #8c8c8c;
+  white-space: nowrap;
+}
+
+.add-btn {
+  padding: 3px 10px;
+  background: #1677ff;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.add-btn:disabled {
+  background: #d9d9d9;
+  cursor: not-allowed;
+}
+
+.add-btn:not(:disabled):hover {
+  background: #4096ff;
+}
+
+.expand-btn {
+  padding: 3px 10px;
+  background: #fff;
+  color: #595959;
+  border: 1px solid #d9d9d9;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.expand-btn:hover {
+  color: #3370ff;
+  border-color: #3370ff;
+}
+
+.status-bar {
+  display: flex;
+  align-items: center;
+  padding: 6px 10px;
+  background: #fafafa;
+  border-bottom: 1px solid #f0f0f0;
+  flex-shrink: 0;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.status-label {
+  font-size: 12px;
+  color: #595959;
+  font-weight: 500;
+}
+
+.select-fields-bar {
+  display: flex;
+  align-items: center;
+  padding: 6px 10px;
+  background: #fafafa;
+  border-bottom: 1px solid #f0f0f0;
+  flex-shrink: 0;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.select-field-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.select-field-name {
+  font-size: 12px;
+  color: #595959;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.selected-hint {
+  font-size: 11px;
+  color: #8c8c8c;
+  margin-left: 8px;
+}
+
+.minder-container {
+  flex: 1;
+  min-height: 400px;
+  position: relative;
+  overflow: hidden;
+}
+
+.minder-container .jsmind-inner {
+  overflow: scroll !important;
+  width: 100% !important;
+  height: 100% !important;
+  cursor: grab;
+}
+
+/* 隐藏滚动条但保留滚动功能 */
+.minder-container .jsmind-inner::-webkit-scrollbar {
+  display: none;
+}
+.minder-container .jsmind-inner {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+/* 内联下拉选择器 */
+.inline-dropdown-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 99;
+}
+
+.inline-dropdown {
+  position: absolute;
+  z-index: 100;
+  background: #fff;
+  border: 1px solid #dee0e3;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  padding: 4px 0;
+  min-width: 80px;
+}
+
+.inline-dropdown-item {
+  padding: 6px 12px;
+  font-size: 13px;
+  color: #1f2329;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.inline-dropdown-item:hover {
+  background: #f0f7ff;
+  color: #3370ff;
+}
+
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  font-size: 16px;
+  color: #8c8c8c;
+}
+
+.error-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  gap: 12px;
+  padding: 20px;
+}
+
+.error-icon {
+  font-size: 48px;
+}
+
+.error-message {
+  font-size: 14px;
+  color: #f5222d;
+  font-weight: 500;
+  text-align: center;
+}
+
+/* ===== 飞书风格主题覆盖 ===== */
+
+/* 整体背景 */
+.minder-container .jsmind-inner {
+  background: #fff !important;
+}
+
+/* 节点样式 - 清爽白底（第1层：功能模块） */
+.minder-container jmnode {
+  background-color: #fff !important;
+  color: #1f2329 !important;
+  border: 1.5px solid #dee0e3 !important;
+  border-radius: 6px !important;
+  padding: 6px 12px !important;
+  font-size: 14px !important;
+  font-weight: 400 !important;
+  box-shadow: none !important;
+  transition: border-color 0.2s, background-color 0.2s;
+}
+
+/* 根节点 */
+.minder-container jmnode.root {
+  background-color: #f0f7ff !important;
+  border-color: #3370ff !important;
+  color: #1f2329 !important;
+  font-size: 16px !important;
+  font-weight: 600 !important;
+  padding: 8px 16px !important;
+  border-radius: 8px !important;
+}
+
+/* 选中状态 */
+.minder-container jmnode.selected {
+  background-color: #f0f7ff !important;
+  border-color: #3370ff !important;
+  box-shadow: 0 0 0 2px rgba(51, 112, 255, 0.2) !important;
+}
+
+/* 悬停状态 */
+.minder-container jmnode:hover {
+  border-color: #3370ff !important;
+}
+
+/* ===== 第3层：字段名节点样式 ===== */
+/* 字段名节点 ID 格式: {recordId}_{fieldId}，不以 _val 结尾 */
+.minder-container jmnode[nodeid*="_fld"],
+.minder-container jmnode[data-nodeid*="_fld"] {
+  font-size: 11px !important;
+  color: #8c8c8c !important;
+  background-color: #fafafa !important;
+  border: 1px solid #e8e8e8 !important;
+  border-radius: 4px !important;
+  padding: 3px 8px !important;
+  font-weight: 500 !important;
+}
+
+/* ===== 第4层：字段值节点样式 ===== */
+/* 字段值节点 ID 格式: {recordId}_{fieldId}_val */
+.minder-container jmnode[nodeid$="_val"],
+.minder-container jmnode[data-nodeid$="_val"] {
+  font-size: 12px !important;
+  color: #434343 !important;
+  background-color: #fff !important;
+  border: 1.5px dashed #bfbfbf !important;
+  border-radius: 4px !important;
+  padding: 4px 10px !important;
+  font-weight: 400 !important;
+}
+
+.minder-container jmnode[nodeid$="_val"]:hover,
+.minder-container jmnode[data-nodeid$="_val"]:hover {
+  border-color: #3370ff !important;
+  background-color: #f0f7ff !important;
+}
+
+/* 展开/折叠按钮 */
+.minder-container jmexpander {
+  border: 1.5px solid #dee0e3 !important;
+  background-color: #fff !important;
+  color: #646a73 !important;
+  font-size: 11px !important;
+  width: 18px !important;
+  height: 18px !important;
+  line-height: 16px !important;
+  border-radius: 50% !important;
+}
+
+.minder-container jmexpander:hover {
+  border-color: #3370ff !important;
+  color: #3370ff !important;
+}
+
+/* 连接线颜色 - 蓝色 */
+.minder-container .jsmind-inner svg path {
+  stroke: #3370ff !important;
+  stroke-width: 2 !important;
+}
