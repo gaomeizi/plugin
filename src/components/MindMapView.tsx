@@ -45,12 +45,13 @@ function getNodeLevel(
   const isRecord = records.some((r) => r.id === nodeId);
   if (!isRecord) return NodeLevel.FIELD_NAME;
 
-  // 记录节点：判断是否有父记录
-  if (parentFieldId) {
-    const record = records.find((r) => r.id === nodeId);
-    if (record && record.fields[parentFieldId]) {
-      return NodeLevel.TESTCASE; // 有父记录 → 第2层
-    }
+  // 扁平模式（无父字段）：所有记录节点都是第1层
+  if (!parentFieldId) return NodeLevel.MODULE;
+
+  // 父子关系模式：判断是否有父记录
+  const record = records.find((r) => r.id === nodeId);
+  if (record && record.fields[parentFieldId]) {
+    return NodeLevel.TESTCASE; // 有父记录 → 第2层
   }
   return NodeLevel.MODULE; // 无父记录 → 第1层
 }
@@ -99,6 +100,10 @@ function getStatusColor(value: string) {
 
 /**
  * 将飞书表格数据转换为 jsMind 数据格式
+ *
+ * 支持两种模式：
+ * 1. 父子关系模式（parentFieldId 有值）：通过父记录字段构建树形结构，叶子节点展开字段
+ * 2. 扁平模式（parentFieldId 为空）：每条记录直接作为根节点的子节点，每条记录都展开字段
  */
 function buildJsMindData(
   records: RecordData[],
@@ -112,6 +117,50 @@ function buildJsMindData(
     return { id: 'root', topic: '空数据', children: [] };
   }
 
+  const fieldNameMap = new Map(fieldList.map((f) => [f.id, f.name]));
+  const recordMap = new Map(records.map((r) => [r.id, r]));
+
+  // ===== 扁平模式：无父记录字段，每行即一个用例 =====
+  if (!parentFieldId) {
+    const fieldsToShow = childFieldIds.filter((fid) => fid !== labelFieldId);
+
+    const children = records.map((record) => {
+      const label = record.fields[labelFieldId] || record.id.slice(0, 8);
+      const statusValue = statusFieldId ? (record.fields[statusFieldId] || '') : '';
+      const color = getStatusColor(statusValue);
+
+      const fieldChildren: any[] = fieldsToShow.map((fieldId) => {
+        const fieldName = fieldNameMap.get(fieldId) || fieldId;
+        const value = record.fields[fieldId] || '';
+        return {
+          id: `${record.id}_${fieldId}`,
+          topic: fieldName,
+          children: [{
+            id: `${record.id}_${fieldId}_val`,
+            topic: value || '(空)',
+            children: [],
+          }],
+        };
+      });
+
+      return {
+        id: record.id,
+        topic: label,
+        children: fieldChildren,
+        'data-status': statusValue,
+        'data-bg': color?.bg || '',
+        'data-border': color?.border || '',
+      };
+    });
+
+    return {
+      id: 'root',
+      topic: '测试用例',
+      children,
+    };
+  }
+
+  // ===== 父子关系模式：通过父记录字段构建树形结构 =====
   const nameToIds = new Map<string, string[]>();
   records.forEach((r) => {
     const name = r.fields[labelFieldId] || '';
@@ -125,23 +174,18 @@ function buildJsMindData(
   const childrenMap = new Map<string, string[]>();
   const hasParent = new Set<string>();
 
-  if (parentFieldId) {
-    records.forEach((r) => {
-      const parentValue = r.fields[parentFieldId];
-      if (!parentValue) return;
-      const parentIds = nameToIds.get(parentValue) || [];
-      const parentId = parentIds.find((pid) => pid !== r.id);
-      if (parentId) {
-        const children = childrenMap.get(parentId) || [];
-        children.push(r.id);
-        childrenMap.set(parentId, children);
-        hasParent.add(r.id);
-      }
-    });
-  }
-
-  const fieldNameMap = new Map(fieldList.map((f) => [f.id, f.name]));
-  const recordMap = new Map(records.map((r) => [r.id, r]));
+  records.forEach((r) => {
+    const parentValue = r.fields[parentFieldId];
+    if (!parentValue) return;
+    const parentIds = nameToIds.get(parentValue) || [];
+    const parentId = parentIds.find((pid) => pid !== r.id);
+    if (parentId) {
+      const children = childrenMap.get(parentId) || [];
+      children.push(r.id);
+      childrenMap.set(parentId, children);
+      hasParent.add(r.id);
+    }
+  });
 
   function buildNode(recordId: string): any {
     const record = recordMap.get(recordId)!;
@@ -340,20 +384,22 @@ export const MindMapView: React.FC = () => {
           .filter((r) => activeFilters.every(([fid, vals]) => vals.includes(r.fields[fid] || '')))
           .map((r) => r.id)
       );
-      // 向上追溯父节点，确保树结构完整
+      // 向上追溯父节点，确保树结构完整（仅父子关系模式需要）
       const allIncluded = new Set<string>(matchedIds);
-      const addAncestors = (recordId: string) => {
-        const record = records.find((r) => r.id === recordId);
-        if (!record || !parentFieldId) return;
-        const parentValue = record.fields[parentFieldId];
-        if (!parentValue) return;
-        const parentRecord = records.find((r) => r.fields[effectiveLabelFieldId] === parentValue && r.id !== recordId);
-        if (parentRecord && !allIncluded.has(parentRecord.id)) {
-          allIncluded.add(parentRecord.id);
-          addAncestors(parentRecord.id);
-        }
-      };
-      matchedIds.forEach((id) => addAncestors(id));
+      if (parentFieldId) {
+        const addAncestors = (recordId: string) => {
+          const record = records.find((r) => r.id === recordId);
+          if (!record) return;
+          const parentValue = record.fields[parentFieldId];
+          if (!parentValue) return;
+          const parentRecord = records.find((r) => r.fields[effectiveLabelFieldId] === parentValue && r.id !== recordId);
+          if (parentRecord && !allIncluded.has(parentRecord.id)) {
+            allIncluded.add(parentRecord.id);
+            addAncestors(parentRecord.id);
+          }
+        };
+        matchedIds.forEach((id) => addAncestors(id));
+      }
       filteredRecords = records.filter((r) => allIncluded.has(r.id));
     }
 
@@ -617,12 +663,12 @@ export const MindMapView: React.FC = () => {
 
         // 判断父节点来决定写入方式
         if (curParentFieldId && parentNode.id !== 'root' && curRecords.some((r) => r.id === parentNode.id)) {
-          // 父节点是记录 → 新增用例，关联父记录
+          // 父子关系模式：父节点是记录 → 新增用例，关联父记录
           addRecord(curLabelFieldId, topic, curParentFieldId, parentNode.id).then(() => {
             refresh();
           }).catch((err) => message.error('同步失败: ' + err.message));
         } else {
-          // 父节点是虚拟根或非记录 → 新增模块（无父记录）
+          // 扁平模式或父节点是虚拟根 → 新增根级节点（无父记录）
           addRecord(curLabelFieldId, topic).then(() => {
             refresh();
           }).catch((err) => message.error('同步失败: ' + err.message));
@@ -697,8 +743,14 @@ export const MindMapView: React.FC = () => {
   // 新增子节点：父记录 = 选中节点的 recordId
   const handleAddChild = useCallback(async () => {
     const jm = jmRef.current;
-    if (!jm || !effectiveLabelFieldId || !parentFieldId) {
-      message.warning('请先选择"父记录"字段');
+    if (!jm || !effectiveLabelFieldId) {
+      message.warning('请先选择字段');
+      return;
+    }
+
+    // 扁平模式（无父字段）：不支持新增子节点
+    if (!parentFieldId) {
+      message.warning('当前为扁平模式（无父记录字段），不支持新增子节点');
       return;
     }
 
